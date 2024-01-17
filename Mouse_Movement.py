@@ -5,23 +5,6 @@ import pyautogui as pg
 import math
 
 # My Functions
-def Areas():
-    if abs(cx - nx) <= 25 and abs(cy - ny) <= 25:
-        Neutral_Area = True
-        pass
-        # print("Neutral Area")
-    elif abs(cx - nx) <= 50 and abs(cy - ny) <= 50:
-        Neutral_Area = False
-        pass
-        # print("Area 50")
-    elif abs(cx - nx) <= 80 and abs(cy - ny) <= 80:
-        Neutral_Area = False
-        pass
-        # print("Area 80")
-    elif abs(cx - nx) <= 125 and abs(cy - ny) <= 125:
-        Neutral_Area = False
-
-        # print("Area 125")
 
 def No_Hands():
     Initial_Time = time.time()
@@ -33,33 +16,15 @@ def FCircle(x,y,rad,color):
 def Circle(x,y,rad,color, thick):
     cv.circle(img, (x,y), rad, color, thick)
 
-def Find_Angle(x1,y1,x2,y2):
-    slope = 0
-    if x1 == x2:
-        angle = 90
+def mouse_position(nx,ny,cx,cy):
+    tx,ty = cx,cy
+    rx = tx-nx
+    ry = ty-ny
+    crX,crY = pg.position()
+    x = rx + crX
+    y = ry + crY
 
-    elif y1 == y2:
-        angle = 0
-
-    else:
-        slope = (y2 - y1) / (x2 - x1)
-        Rangle = math.atan(slope)
-        angle = Rangle * (180 / (math.pi))
-
-    # print(f'nx,ny = {nx,ny} and cx,cy = {cx,cy}')
-    if Quad1:
-        print(abs(angle))
-    if Quad2:
-        angle = 180 - angle
-        print(angle)
-    if Quad3:
-        angle = abs(angle)
-        angle = (angle + 180)
-        print(angle)
-    if Quad4:
-        angle = 360 - angle
-        print(angle)
-    # print(f'angle = {angle}')
+    return  x,y
 
 # Colors
 Red = (0,0,255)
@@ -101,39 +66,44 @@ Rangle = 0
 L,U,R,D = False,False,False,False
 Quad1,Quad2,Quad3,Quad4 = False,False,False,False
 
-
+pg.FAILSAFE = False
 while True:
 
-    if (R and U) and Neutral_Area == False:
-        Quad1 = True
-        Quad2 = False
-        Quad3 = False
-        Quad4 = False
-        Find_Angle(nx,ny,cx,cy)
-    if L and U and Neutral_Area == False:
-        Quad1 = False
-        Quad2 = True
-        Quad3 = False
-        Quad4 = False
-        Find_Angle(cx,cy,nx,ny)
+    if Neutral_Area == False:
+        if (R and U) and Neutral_Area == False:
+            Quad1 = True
+            Quad2 = False
+            Quad3 = False
+            Quad4 = False
 
-        # print(" 270 to 360")
-    if L and D and Neutral_Area == False:
-        Quad1 = False
-        Quad2 = False
-        Quad3 = True
-        Quad4 = False
-        Find_Angle(nx,ny,cx,cy)
+            mx,my = mouse_position(nx,ny,cx,cy)
+            pg.moveTo(mx,my)
+        if L and U and Neutral_Area == False:
+            Quad1 = False
+            Quad2 = True
+            Quad3 = False
+            Quad4 = False
+            mx, my = mouse_position(nx, ny, cx, cy)
+            pg.moveTo(mx, my)
 
-        # print(" 90 to 180 ")
-    if R and D and Neutral_Area == False:
-        Quad1 = False
-        Quad2 = False
-        Quad3 = False
-        Quad4 = True
-        Find_Angle(nx,ny,cx,cy)
 
-        # print(" 180 to 270 ")
+        if L and D and Neutral_Area == False:
+            Quad1 = False
+            Quad2 = False
+            Quad3 = True
+            Quad4 = False
+            mx, my = mouse_position(nx, ny, cx, cy)
+            pg.moveTo(mx, my)
+
+
+        if R and D and Neutral_Area == False:
+            Quad1 = False
+            Quad2 = False
+            Quad3 = False
+            Quad4 = True
+            mx, my = mouse_position(nx, ny, cx, cy)
+            pg.moveTo(mx, my)
+
 
     ret, img = cap.read()
     img = cv.flip(img, 1)
@@ -144,6 +114,7 @@ while True:
     if result.multi_hand_landmarks == None:
         # No_Hands()
         Initial_Time = time.time()
+        Neutral_Area = True
 
     if result.multi_hand_landmarks:
         for handLms in result.multi_hand_landmarks:
@@ -158,15 +129,26 @@ while True:
             if overall_time <= 2:
                 nx, ny = cx, cy
             if overall_time >= 2:
-                Circle(nx,ny,25,Red, 2)
+                Circle(nx,ny,18,Red, 2)
                 Circle(nx,ny,50, Red, 1)
                 Circle(nx,ny,80, Red, 1)
                 Circle(nx,ny,125, Red, 1)
                 cv.line(img, (nx-125,ny),(nx+125,ny), Green, 2)
                 cv.line(img, (nx,ny-125),(nx,ny+125), Green, 2)
 
-                Areas()
-                # Find_Angle(cx,cy,nx,ny)
+                if abs(cx - nx) <= 18 and abs(cy - ny) <= 18:
+                    Neutral_Area = True
+                elif abs(cx - nx) <= 50 and abs(cy - ny) <= 50:
+                    Neutral_Area = False
+                    pass
+                    # print("Area 50")
+                elif abs(cx - nx) <= 80 and abs(cy - ny) <= 80:
+                    Neutral_Area = False
+                    pass
+                    # print("Area 80")
+                elif abs(cx - nx) <= 125 and abs(cy - ny) <= 125:
+                    Neutral_Area = False
+
 
             if cx - nx <= 125 and cx - nx >= 0:
                 R = True
