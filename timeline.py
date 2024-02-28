@@ -15,6 +15,7 @@ TandI, IandM, MandR, RandP = False,False,False,False
 hit = False
 measurer = 20
 
+
 init_time = time.time()
 c_time = 0
 Red = (0,0,255)
@@ -53,6 +54,7 @@ while True:
             rx,ry = int(ring.x*w), int(ring.y*h)
             px,py = int(pinky.x*w), int(pinky.y*h)
             wx, wy = int(wrist.x*w), int(wrist.y*h)
+
 
             if abs(int((ix - tx)+(ty - iy))/2) < measurer: TandI = True
             else: TandI = False

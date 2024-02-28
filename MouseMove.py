@@ -35,12 +35,13 @@ Green = (0,255,0)
 h,w,c = 0,0,0
 
 # Pixels Related Variables
-cx,cy= 0,0
+ix,iy= 0,0
 nx = 0
 ny = 0
 
 # Open CV variables
 cap = cv.VideoCapture(0)
+
 
 # Mediapipe Variables
 mpHands = mp.solutions.hands
@@ -65,6 +66,9 @@ Rangle = 0
 
 L,U,R,D = False,False,False,False
 Quad1,Quad2,Quad3,Quad4 = False,False,False,False
+TandI, IandM, MandR, RandP,MandT= False,False,False,False,False
+
+measurer = 25
 
 pg.FAILSAFE = False
 while True:
@@ -76,14 +80,14 @@ while True:
             Quad3 = False
             Quad4 = False
 
-            mx,my = mouse_position(nx,ny,cx,cy)
+            mx,my = mouse_position(nx, ny, ix, iy)
             pg.moveTo(mx,my)
         if L and U and Neutral_Area == False:
             Quad1 = False
             Quad2 = True
             Quad3 = False
             Quad4 = False
-            mx, my = mouse_position(nx, ny, cx, cy)
+            mx, my = mouse_position(nx, ny, ix, iy)
             pg.moveTo(mx, my)
 
 
@@ -92,7 +96,7 @@ while True:
             Quad2 = False
             Quad3 = True
             Quad4 = False
-            mx, my = mouse_position(nx, ny, cx, cy)
+            mx, my = mouse_position(nx, ny, ix, iy)
             pg.moveTo(mx, my)
 
 
@@ -101,7 +105,7 @@ while True:
             Quad2 = False
             Quad3 = False
             Quad4 = True
-            mx, my = mouse_position(nx, ny, cx, cy)
+            mx, my = mouse_position(nx, ny, ix, iy)
             pg.moveTo(mx, my)
 
 
@@ -127,18 +131,32 @@ while True:
             middle = handLms.landmark[mpHands.HandLandmark.MIDDLE_FINGER_TIP]
             ring = handLms.landmark[mpHands.HandLandmark.RING_FINGER_TIP]
             h, w, c = img.shape
-            cx, cy = int(index.x * w), int(index.y * h)
+            ix, iy = int(index.x * w), int(index.y * h)
             mx,my = int(middle.x * w), int(middle.y * h)
             tx,ty = int(thumb.x * w), int(thumb.y *h)
             px,py = int(pinky.x * w), int(pinky.y *h)
             rx, ry = int(ring.x * w), int(ring.y * h)
-            Circle(cx, cy, 5, Green, 3)
-            leftdistance = ((cx - tx) + (ty - cy)) / 2
-            rightdistance = mx - cx
+
+            if abs(int((ix - tx)+(ty - iy))/2) < measurer: TandI = True
+            else: TandI = False
+            if abs(int((mx - ix)+(iy - my))/2) < measurer: IandM = True
+            else: IandM = False
+            if abs(int((rx - mx)+(ry - my))/2) < measurer: MandR = True
+            else: MandR = False
+            if abs(int((px - rx)+(py - ry))/2) < measurer: RandP = True
+            else: RandP = False
+            if abs(int((rx - tx) + (ty - ry)) / 2) < measurer:
+                MandT = True
+            else:
+                MandT = False
+
+            Circle(ix, iy, 5, Green, 3)
+            leftdistance = ((ix - tx) + (ty - iy)) / 2
+            rightdistance = mx - ix
             scrollup = ((px - tx) + (ty - py)) / 2
             scrolldown = ((rx - tx) + (ty - ry)) / 2
             if overall_time <= 2:
-                nx, ny = cx, cy
+                nx, ny = ix, iy
             if overall_time >= 2:
                 Circle(nx,ny,18,Red, 2)
                 Circle(nx,ny,50, Red, 1)
@@ -147,42 +165,53 @@ while True:
                 cv.line(img, (nx-125,ny),(nx+125,ny), Green, 2)
                 cv.line(img, (nx,ny-125),(nx,ny+125), Green, 2)
 
-                if abs(cx - nx) <= 18 and abs(cy - ny) <= 18:
+                if abs(ix - nx) <= 18 and abs(iy - ny) <= 18:
                     Neutral_Area = True
-                elif abs(cx - nx) <= 50 and abs(cy - ny) <= 50:
+                elif abs(ix - nx) <= 50 and abs(iy - ny) <= 50:
                     Neutral_Area = False
                     pass
                     # print("Area 50")
-                elif abs(cx - nx) <= 80 and abs(cy - ny) <= 80:
+                elif abs(ix - nx) <= 80 and abs(iy - ny) <= 80:
                     Neutral_Area = False
                     pass
-                    # print("Area 80")                if leftdistance <= 20:
-                    #                     pg.leftClick(pg.position())
-                elif abs(cx - nx) <= 125 and abs(cy - ny) <= 125:
+
+                elif abs(ix - nx) <= 125 and abs(iy - ny) <= 125:
                     Neutral_Area = False
+                else:
+                    pass
 
-                if leftdistance <= 20:
-                    pg.leftClick(pg.position())
-                if rightdistance <=20:
+
+                if MandT and TandI == False and IandM == False:
+                    time.sleep(0.1)
                     pg.rightClick(pg.position())
-                # if rightdistance <= 35:
-                #     pg.rightClick(pg.position())
-                # if scrollup <= 20:
-                #     pg.scroll(200)
-                # if scrolldown <= 20:
-                #     pg.scroll(-200)
+
+                elif TandI and MandT == False and IandM == False:
+                    time.sleep(0.1)
+                    pg.leftClick(pg.position())
+
+                elif TandI == False and IandM == True and MandR== True and RandP==True:
+                    # Neutral_Area = True
+                    if tx < px:
+                        nx, ny = ix, iy
+                        pg.scroll(-100)
+                    if tx > px:
+                        nx, ny = ix, iy
+                        pg.scroll(100)
+
+                if IandM and TandI == False and MandR == False:
+                    nx, ny = ix, iy
 
 
-            if cx - nx <= 125 and cx - nx >= 0:
+            if ix - nx <= 125 and ix - nx >= 0:
                 R = True
                 L = False
-            if cx - nx <= 0 and cx - nx >= -125:
+            if ix - nx <= 0 and ix - nx >= -125:
                 L = True
                 R = False
-            if cy - ny <= 125 and cy - ny >= 0:
+            if iy - ny <= 125 and iy - ny >= 0:
                 D = True
                 U = False
-            if cy - ny <= 0 and cy - ny >= -125:
+            if iy - ny <= 0 and iy - ny >= -125:
                 U = True
                 D = False
 
