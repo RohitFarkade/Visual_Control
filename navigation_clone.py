@@ -6,12 +6,8 @@ import math
 
 # My Functions
 
-mcmcX, mcmcY = 0,0
-scrollable = False
-scrX, scrY = 0,0
 def No_Hands():
     Initial_Time = time.time()
-    scrollable = False
 
 
 def FCircle(x,y,rad,color):
@@ -27,6 +23,7 @@ def mouse_position(nx,ny,cx,cy):
     crX,crY = pg.position()
     x = rx + crX
     y = ry + crY
+
     return  x,y
 
 # Colors
@@ -45,7 +42,6 @@ ny = 0
 # Open CV variables
 cap = cv.VideoCapture(0)
 
-scrCounter = 0
 
 # Mediapipe Variables
 mpHands = mp.solutions.hands
@@ -70,23 +66,12 @@ Rangle = 0
 
 L,U,R,D = False,False,False,False
 Quad1,Quad2,Quad3,Quad4 = False,False,False,False
-TandI, IandM, MandR, RandP,TandR= False,False,False,False,False
+TandI, IandM, MandR, RandP,MandT= False,False,False,False,False
 
 measurer = 25
 
 pg.FAILSAFE = False
 while True:
-
-    if scrollable:
-        print(scrollable)
-        Neutral_Area = True
-        if mcmcY > scrY:
-            pg.scroll(-150)
-        if mcmcY < scrY:
-            pg.scroll((150))
-    if scrollable == False:
-        scrCounter = 0
-
 
     if Neutral_Area == False:
         if (R and U) and Neutral_Area == False:
@@ -124,7 +109,6 @@ while True:
             pg.moveTo(mx, my)
 
 
-
     ret, img = cap.read()
     img = cv.flip(img, 1)
     rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -135,7 +119,6 @@ while True:
         # No_Hands()
         Initial_Time = time.time()
         Neutral_Area = True
-        scrollable = False
 
     if result.multi_hand_landmarks:
         for handLms in result.multi_hand_landmarks:
@@ -146,18 +129,13 @@ while True:
             thumb = handLms.landmark[mpHands.HandLandmark.THUMB_TIP]
             pinky = handLms.landmark[mpHands.HandLandmark.PINKY_TIP]
             middle = handLms.landmark[mpHands.HandLandmark.MIDDLE_FINGER_TIP]
-            middlecmc = handLms.landmark[mpHands.HandLandmark.MIDDLE_FINGER_MCP]
-
             ring = handLms.landmark[mpHands.HandLandmark.RING_FINGER_TIP]
-
             h, w, c = img.shape
             ix, iy = int(index.x * w), int(index.y * h)
             mx,my = int(middle.x * w), int(middle.y * h)
             tx,ty = int(thumb.x * w), int(thumb.y *h)
             px,py = int(pinky.x * w), int(pinky.y *h)
             rx, ry = int(ring.x * w), int(ring.y * h)
-            mcmcX, mcmcY = int(middlecmc.x * w), int(middlecmc.y * h)
-
 
             if abs(int((ix - tx)+(ty - iy))/2) < measurer: TandI = True
             else: TandI = False
@@ -167,10 +145,10 @@ while True:
             else: MandR = False
             if abs(int((px - rx)+(py - ry))/2) < measurer: RandP = True
             else: RandP = False
-            if abs(int((rx - tx) + (ty - ry)) / 2) < 30:
-                TandR = True
+            if abs(int((rx - tx) + (ty - ry)) / 2) < measurer:
+                MandT = True
             else:
-                TandR = False
+                MandT = False
 
             Circle(ix, iy, 5, Green, 3)
             leftdistance = ((ix - tx) + (ty - iy)) / 2
@@ -203,29 +181,25 @@ while True:
                     pass
 
 
-                if TandR:
+                if MandT and TandI == False and IandM == False:
                     time.sleep(0.1)
                     pg.rightClick(pg.position())
-                    scrollable = False
 
-                elif TandI and TandR == False and IandM == False:
+                elif TandI and MandT == False and IandM == False:
                     time.sleep(0.1)
                     pg.leftClick(pg.position())
-                    scrollable = False
 
+                elif TandI == False and IandM == True and MandR== True and RandP==True:
+                    # Neutral_Area = True
+                    if tx < px:
+                        nx, ny = ix, iy
+                        pg.scroll(-100)
+                    if tx > px:
+                        nx, ny = ix, iy
+                        pg.scroll(100)
 
-                elif IandM and TandI == False and MandR == False:
+                if IandM and TandI == False and MandR == False:
                     nx, ny = ix, iy
-                    scrollable = False
-
-
-                if abs(ix - tx) < 30 and abs(mx - ix) < 30 and abs(rx - mx) < 30 and abs(px - rx) < 30:
-                    scrollable = True
-                    scrCounter += 1
-                    if scrCounter == 1:
-                        scrX, scrY = mcmcX, mcmcY
-                else:
-                    scrollable = False
 
 
             if ix - nx <= 125 and ix - nx >= 0:
